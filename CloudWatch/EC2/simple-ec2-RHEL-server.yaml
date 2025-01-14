@@ -1,0 +1,57 @@
+---
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: ID of the subnet to launch the instance in
+  SecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: ID of the security group to associate with the instance
+  InstanceProfileName:
+    Type: String
+    Description: "The name of the IAM Instance Profile to associate with the instance"
+    AllowedValues:
+      - AmazonSSMRoleForInstancesQuickSetup
+
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0c7af5fe939f2677f
+      InstanceType: t2.micro
+      KeyName: !Ref KeyName
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            Encrypted: false
+            DeleteOnTermination: true
+            Iops: 3000
+            SnapshotId: snap-0d00c5462139042b8
+            VolumeSize: 10
+            VolumeType: gp3
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          GroupSet:
+            - !Ref SecurityGroupId
+          SubnetId: !Ref SubnetId
+      CreditSpecification:
+        CPUCredits: standard
+      IamInstanceProfile: !Ref InstanceProfileName
+
+      PrivateDnsNameOptions:
+        HostnameType: ip-name
+        EnableResourceNameDnsARecord: false
+        EnableResourceNameDnsAAAARecord: false
+      Tags:
+        - Key: Name
+          Value: test-rhel-server
+        - Key: Environment
+          Value: dev
+Outputs:
+  InstanceId:
+    Description: The Instance ID
+    Value: !Ref EC2Instance
+
