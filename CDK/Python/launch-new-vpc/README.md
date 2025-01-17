@@ -1,16 +1,23 @@
 
-# Welcome to your CDK Python project!
-
-This is a blank project for CDK development with Python.
+# Launch New VPC Stack
 
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
-This project is set up like a standard Python project.  The initialization
-process also creates a virtualenv within this project, stored under the `.venv`
-directory.  To create the virtualenv it assumes that there is a `python3`
-(or `python` for Windows) executable in your path with access to the `venv`
-package. If for any reason the automatic creation of the virtualenv fails,
-you can create the virtualenv manually.
+You can configure custom parameters in `cdk.json` as well...
+
+For example:
+
+    "vpcCidr": "10.10.0.0/16",
+    "vpcId": "CDK VPC",
+    "maxAzs": "3",
+    "numNatGateways": "0",
+    "publicCidrMask": "24",
+    "privateCidrMask": "24",
+    "mapPublicIp": true,
+    "createInternetGateway": true,
+    "dnsHostnames": true,
+    "dnsSupport": true
+
 
 To manually create a virtualenv on MacOS and Linux:
 
@@ -55,4 +62,3 @@ command.
  * `cdk diff`        compare deployed stack with current state
  * `cdk docs`        open CDK documentation
 
-Enjoy!
