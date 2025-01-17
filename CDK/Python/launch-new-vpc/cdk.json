@@ -78,6 +78,16 @@
     "@aws-cdk/aws-stepfunctions-tasks:fixRunEcsTaskPolicy": true,
     "@aws-cdk/aws-ec2:bastionHostUseAmazonLinux2023ByDefault": true,
     "@aws-cdk/aws-route53-targets:userPoolDomainNameMethodWithoutCustomResource": true,
-    "@aws-cdk/aws-elasticloadbalancingV2:albDualstackWithoutPublicIpv4SecurityGroupRulesDefault": true
+    "@aws-cdk/aws-elasticloadbalancingV2:albDualstackWithoutPublicIpv4SecurityGroupRulesDefault": true,
+    "vpcCidr": "10.10.0.0/16",
+    "vpcId": "CDK VPC",
+    "maxAzs": "3",
+    "numNatGateways": "0",
+    "publicCidrMask": "24",
+    "privateCidrMask": "24",
+    "mapPublicIp": true,
+    "createInternetGateway": true,
+    "dnsHostnames": true,
+    "dnsSupport": true
   }
 }
