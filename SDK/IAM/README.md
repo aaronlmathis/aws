@@ -24,10 +24,9 @@ pip install PyYAML
 
 # Scripts
 
-1. Action-Level Script - File Name: iam_user_access_action_level.py
+**Action-Level Script**: iam_user_access_action_level.py
 
-Key Features
--
+**Key Features**
 - Uses Granularity='ACTION_LEVEL' to produce a detailed report of every tracked action in each service (e.g., s3:PutObject, s3:GetObject, etc.).
 - Each row in the final output shows:
     - UserName
@@ -37,9 +36,7 @@ Key Features
     - ActionName
     - LastAccessed (timestamp or “Never”)
 
-Usage
--
-
+**Usage**
 1. Make sure you have your AWS credentials set (e.g., ~/.aws/credentials or environment variables).
 2. Run the script from the command line:
 ```
@@ -49,8 +46,7 @@ python iam_user_access_action_level.py <IAM_USERNAME> [--format {csv,json,yaml,x
 - --format: Optional; sets the output format. Defaults to CSV.
 - --output: Optional; sets the base name (without extension) for the report file. Defaults to a timestamped base name (e.g., iam-user-access-action-level-report-01-19-2025).
 
-Examples
--
+**Examples**
 ```
 # Output in CSV (default):
 python iam_user_access_action_level.py alice
@@ -60,11 +56,8 @@ python iam_user_access_action_level.py alice --format json --output alice-action
 ```
 After completion, the script will produce a file named something like iam-user-access-action-level-report-01-19-2025.csv (or .json, etc.).
 
-2. Service-Level Script
-
-File Name: iam_service_level_report.py (or however you choose to name it)
-Key Features
--
+**Service-Level Script**: File Name: iam_service_level_report.py (or however you choose to name it)
+**Key Features**
 - Uses Granularity='SERVICE_LEVEL' to produce a simpler, high-level view of which AWS services the user can access, and when each was last used.
 - Each row in the final output shows:
     - UserName
@@ -73,9 +66,7 @@ Key Features
     - ServiceName
      - LastAccessed (timestamp or “Never”)
 
-Usage
--
-
+**Usage**
 1. Make sure you have your AWS credentials set (e.g., ~/.aws/credentials or environment variables).
 2. Run the script from the command line:
 ```
@@ -85,8 +76,7 @@ python iam_user_access_service_level.py <IAM_USERNAME> [--format {csv,json,yaml,
 - --format: Optional; sets the output format. Defaults to CSV.
 - --output: Optional; sets the base name (without extension) for the report file. Defaults to a timestamped base name (e.g., iam-user-access-action-level-report-01-19-2025).
 
-Examples
--
+**Examples**
 ```
 # Output in CSV (default):
 python iam_user_access_service_level.py alice
