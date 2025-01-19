@@ -22,10 +22,9 @@ pip install PyYAML
 ``
 - AWS Credentials with permissions to call the necessary IAM APIs (e.g., GenerateServiceLastAccessedDetails, GetServiceLastAccessedDetails, ListAttachedUserPolicies, GetPolicy, etc.). Typically, running this under a role or user with IAM Full Access or adequate read permissions will work.
 
-Scripts
--
+# Scripts
+
 1. Action-Level Script - File Name: iam_user_access_action_level.py
-2. Service-level Script - File Name: iam_user_access_service_level.py
 
 Key Features
 -
