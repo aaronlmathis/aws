@@ -1,0 +1,220 @@
+#!/usr/bin/env python3
+
+import argparse
+import boto3
+import csv
+import json
+import time
+import sys
+from datetime import datetime
+
+# For YAML output (requires "pip install PyYAML")
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
+
+# For XML output (standard library)
+import xml.etree.ElementTree as ET
+
+
+def get_managed_policies_for_user(iam_client, username):
+    """
+    Return a set of ARNs for all managed policies attached directly to the user
+    or through any groups the user is in.
+    """
+    policy_arns = set()
+
+    # 1. Attached managed policies at the USER level
+    attached_user_policies = iam_client.list_attached_user_policies(UserName=username)
+    for p in attached_user_policies['AttachedPolicies']:
+        policy_arns.add(p['PolicyArn'])
+
+    # 2. Groups for the user
+    groups_for_user = iam_client.list_groups_for_user(UserName=username)
+    for group in groups_for_user['Groups']:
+        group_name = group['GroupName']
+        attached_group_policies = iam_client.list_attached_group_policies(GroupName=group_name)
+        for gp in attached_group_policies['AttachedPolicies']:
+            policy_arns.add(gp['PolicyArn'])
+
+    return policy_arns
+
+
+def generate_service_level_report(iam_client, policy_arn):
+    """
+    For a single managed policy, run generate_service_last_accessed_details with Granularity='SERVICE_LEVEL'.
+    Return a list of dictionaries where each dict contains:
+
+        {
+          "PolicyArn": policy_arn,
+          "ServiceName": <string>,
+          "LastAccessed": <datetime or None>
+        }
+    """
+    job_response = iam_client.generate_service_last_accessed_details(
+        Arn=policy_arn,
+        Granularity='SERVICE_LEVEL'
+    )
+    job_id = job_response['JobId']
+
+    # Poll until the job completes
+    while True:
+        job_details = iam_client.get_service_last_accessed_details(JobId=job_id)
+        if job_details['JobStatus'] in ['COMPLETED', 'FAILED']:
+            break
+        time.sleep(1)
+
+    if job_details['JobStatus'] == 'FAILED':
+        print(f"[ERROR] Failed to get service last accessed details for {policy_arn}", file=sys.stderr)
+        return []
+
+    services_last_accessed = job_details.get('ServicesLastAccessed', [])
+    results = []
+
+    for service_info in services_last_accessed:
+        service_name = service_info.get('ServiceName', 'UnknownService')
+        last_auth = service_info.get('LastAuthenticated')  # datetime or None if never used
+
+        results.append({
+            "PolicyArn": policy_arn,
+            "ServiceName": service_name,
+            "LastAccessed": last_auth
+        })
+
+    return results
+
+
+def generate_user_permissions_report(username):
+    """
+    Main logic to:
+      1. Fetch all managed policy ARNs for the user
+      2. For each policy, fetch policy name and service-level last-access details
+      3. Produce a list of dicts with columns:
+         ["UserName", "PolicyName", "PolicyArn", "ServiceName", "LastAccessed"]
+    """
+    iam_client = boto3.client("iam")
+    policy_arns = get_managed_policies_for_user(iam_client, username)
+
+    rows = []
+    for policy_arn in policy_arns:
+        # Get the policy name
+        policy_info = iam_client.get_policy(PolicyArn=policy_arn)
+        policy_name = policy_info['Policy']['PolicyName']
+
+        # Generate a service-level usage report for this policy
+        service_level_data = generate_service_level_report(iam_client, policy_arn)
+
+        for item in service_level_data:
+            last_access_ts = item["LastAccessed"]
+            # Convert to string for consistency
+            last_access_str = last_access_ts.isoformat() if last_access_ts else "Never"
+            rows.append({
+                "UserName": username,
+                "PolicyName": policy_name,
+                "PolicyArn": item["PolicyArn"],
+                "ServiceName": item["ServiceName"],
+                "LastAccessed": last_access_str
+            })
+
+    return rows
+
+
+def export_csv(report_data, output_file):
+    """
+    Export the report data to a CSV file.
+    `report_data` should be a list of dicts with consistent keys.
+    """
+    if not report_data:
+        print("[WARN] No data to export to CSV.")
+        return
+
+    fieldnames = list(report_data[0].keys())  # e.g. ["UserName", "PolicyName", ...]
+
+    with open(output_file, mode='w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(report_data)
+
+    print(f"[INFO] CSV report written to {output_file}")
+
+
+def export_json(report_data, output_file):
+    """
+    Export the report data to a JSON file.
+    """
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(report_data, f, indent=2, default=str)
+
+    print(f"[INFO] JSON report written to {output_file}")
+
+
+def export_yaml(report_data, output_file):
+    """
+    Export the report data to a YAML file.
+    Requires PyYAML to be installed.
+    """
+    if not HAS_YAML:
+        print("[ERROR] PyYAML is not installed. Install via 'pip install PyYAML' to enable YAML export.")
+        return
+
+    with open(output_file, 'w', encoding='utf-8') as f:
+        yaml.dump(report_data, f, sort_keys=False, default_flow_style=False)
+
+    print(f"[INFO] YAML report written to {output_file}")
+
+
+def export_xml(report_data, output_file):
+    """
+    Export the report data to an XML file using xml.etree.ElementTree.
+    We'll create a root <Report> element, and each item is an <Record> with sub-elements.
+    """
+    root = ET.Element("Report")
+
+    for record in report_data:
+        record_el = ET.SubElement(root, "Record")
+        for key, value in record.items():
+            child_el = ET.SubElement(record_el, key)
+            child_el.text = str(value)
+
+    tree = ET.ElementTree(root)
+    tree.write(output_file, encoding='utf-8', xml_declaration=True)
+
+    print(f"[INFO] XML report written to {output_file}")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Generate IAM user service-level permissions report and export to CSV, JSON, YAML, or XML."
+    )
+    parser.add_argument("username", help="IAM username to analyze")
+    parser.add_argument(
+        "--format",
+        default="csv",
+        choices=["csv", "json", "yaml", "xml"],
+        help="Output format (default: csv)"
+    )
+    parser.add_argument(
+        "--output",
+        default="iam-user-access-service-level-report-" + datetime.now().strftime('%m-%d-%Y'),
+        help="Base name (without extension) for the output file. Example: 'report' => 'report.csv'"
+    )
+    args = parser.parse_args()
+
+    # 1. Generate the user permissions (service-level) report
+    report_data = generate_user_permissions_report(args.username)
+
+    # 2. Export based on chosen format
+    if args.format == "csv":
+        export_csv(report_data, f"{args.output}.csv")
+    elif args.format == "json":
+        export_json(report_data, f"{args.output}.json")
+    elif args.format == "yaml":
+        export_yaml(report_data, f"{args.output}.yaml")
+    elif args.format == "xml":
+        export_xml(report_data, f"{args.output}.xml")
+
+
+if __name__ == "__main__":
+    main()
