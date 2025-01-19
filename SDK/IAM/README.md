@@ -42,9 +42,9 @@ pip install PyYAML
 ```
 python iam_user_access_action_level.py <IAM_USERNAME> [--format {csv,json,yaml,xml}] [--output OUTPUT_BASENAME]
 ```
-- <IAM_USERNAME>: The name of the IAM user you want to audit.
-- --format: Optional; sets the output format. Defaults to CSV.
-- --output: Optional; sets the base name (without extension) for the report file. Defaults to a timestamped base name (e.g., iam-user-access-action-level-report-01-19-2025).
+- **<IAM_USERNAME>**: The name of the IAM user you want to audit.
+- **--format:** Optional; sets the output format. Defaults to CSV.
+- **--output:** Optional; sets the base name (without extension) for the report file. Defaults to a timestamped base name (e.g., iam-user-access-action-level-report-01-19-2025).
 
 **Examples**
 ```
@@ -72,9 +72,9 @@ After completion, the script will produce a file named something like iam-user-a
 ```
 python iam_user_access_service_level.py <IAM_USERNAME> [--format {csv,json,yaml,xml}] [--output OUTPUT_BASENAME]
 ```
-- <IAM_USERNAME>: The name of the IAM user you want to audit.
-- --format: Optional; sets the output format. Defaults to CSV.
-- --output: Optional; sets the base name (without extension) for the report file. Defaults to a timestamped base name (e.g., iam-user-access-action-level-report-01-19-2025).
+- **<IAM_USERNAME>:** The name of the IAM user you want to audit.
+- **--format:** Optional; sets the output format. Defaults to CSV.
+- **--output:** Optional; sets the base name (without extension) for the report file. Defaults to a timestamped base name (e.g., iam-user-access-action-level-report-01-19-2025).
 
 **Examples**
 ```
