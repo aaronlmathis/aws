@@ -1,4 +1,6 @@
 # Overview
+While you can absolutely view what services and service actions an IAM user has access to through the Console, you are not able to generate and export this data into reports. This script serves to provide an easy way to generate these reports and export them into csv, xml, json, or yaml.
+
 These two scripts use the AWS SDK for Python (boto3) to:
 
 - Discover all managed policies attached to a specific IAM user (either directly or through any IAM groups they belong to).
